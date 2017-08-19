@@ -4,6 +4,13 @@ import dagger.Component;
 import oxim.digital.reedly.dagger.activity.module.ActivityModule;
 import oxim.digital.reedly.dagger.application.ApplicationComponent;
 
+/*
+* @Component
+* interface MyComponent { ... }
+* -> DaggerMyComponent 구현부를 자동으로 생성합니다.
+*
+* */
+
 @ActivityScope
 @Component(
         dependencies = ApplicationComponent.class,
