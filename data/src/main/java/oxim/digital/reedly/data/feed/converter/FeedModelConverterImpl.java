@@ -21,6 +21,9 @@ public final class FeedModelConverterImpl implements FeedModelConverter {
         return new Article(model.getId(), model.getFeedId(), model.getTitle(), model.getLink(), model.getPublicationDate(), model.isNew(), model.isFavourite());
     }
 
+    // 동일한 정보를 ApiFeed -> FeedModel 로 변경하고 있는데 이렇게 할 필요가 있나
+    // FeedModel 이 DBFlow 형태를 받아놓은건 이해하지만
+    // 그럼 ApiFeed 를 애초에 DBFlow 로 정의해놓고 활용하는건 나쁜건가?
     @Override
     public FeedModel apiToModel(final ApiFeed apiFeed) {
         return new FeedModel(apiFeed.title, clearImageUrl(apiFeed.imageUrl), apiFeed.pageLink, apiFeed.description, apiFeed.url);

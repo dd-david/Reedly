@@ -37,8 +37,12 @@ public class FeedDaoImpl implements FeedDao {
 
     private void innerInsertFeed(final ApiFeed apiFeed) {
         final FeedModel feedModel = feedModelConverter.apiToModel(apiFeed);
+        // DBFlow 에서 save()는 insert + update 역할을 해줍니다
+        // checks if exists, if true update, else insert.
         feedModel.save();
 
+        // ApiFeed 의 articles = List<Article> 복수임
+        // 그 복수개의 Articles 들을 -> 각자의 ArticleModel 로 변경하고 이것들도 저장!
         Stream.of(apiFeed.articles)
               .map(apiArticle -> feedModelConverter.apiToModel(apiArticle, feedModel.getId()))
               .forEach(BaseModel::save);

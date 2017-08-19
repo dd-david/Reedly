@@ -24,6 +24,10 @@ public final class FeedServiceImpl implements FeedService {
             return feedParser.parseFeed(inputStream, feedUrl)
                              .doOnSuccess(feed -> closeStream(inputStream))
                              .doOnError(throwable -> closeStream(inputStream));
+            // 아주 좋은 부분입니다!!!
+            // 내가 stream 을 리턴해주면서, 내 후속처리를 해야하는 상황이 있지
+            // 예를들어 Service 를 처리하다가, 끝나면 stopSelf() 를 부르고 싶은 상황
+            // 그럴때 .doOnSuccess(close) .doOnError(close) 해주면 좋은거 같음
         } catch (IOException e) {
             e.printStackTrace();
             return Single.error(e);
