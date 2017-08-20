@@ -3,6 +3,7 @@ package oxim.digital.reedly.dagger.application;
 import android.app.Application;
 import android.content.Context;
 import android.support.v7.app.AppCompatDelegate;
+import android.util.Log;
 
 import com.facebook.stetho.Stetho;
 import com.raizlabs.android.dbflow.config.FlowConfig;
@@ -35,6 +36,11 @@ import rx.Completable;
  */
 public final class ReedlyApplication extends Application {
 
+    private static final String TAG = "app-ReedlyApplication";
+
+    // domain 모듈에 있는 UseCase 또한 Inject 를 활용해야 하나?
+    // 동일 depth(layer) 에 있는 녀석들끼리 서로 알아야 할때, 의존성 주입을 하는것 뿐 아니라
+    // 내부 계층에 있는 UseCase 를 의존성 주입 하는 이유는?
     @Inject
     ShouldUpdateFeedsInBackgroundUseCase shouldUpdateFeedsInBackgroundUseCase;
 
@@ -50,10 +56,15 @@ public final class ReedlyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d(TAG, "OnCreate");
+
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+
+        // Dagger2 관련
         applicationComponent = ComponentFactory.createApplicationComponent(this);
         applicationComponent.inject(this);
 
+        // DBFlow 관련
         FlowManager.init(new FlowConfig.Builder(this).build());
         checkForBackgroundUpdate();
 
@@ -63,14 +74,28 @@ public final class ReedlyApplication extends Application {
     }
 
     private void checkForBackgroundUpdate() {
-        shouldUpdateFeedsInBackgroundUseCase.execute()
-                                            .flatMap(shouldUpdate -> ((shouldUpdate) ? enableBackgroundFeedUpdatesUseCase.execute()
-                                                                                     : Completable.complete())
-                                                    .toSingleDefault(true))
-                                            .subscribe();
+        Log.d(TAG, "checkForBackgroundUpdate");
+        shouldUpdateFeedsInBackgroundUseCase.execute()          // Single<Boolean>
+                .flatMap(shouldUpdate -> (                      // Completable
+                          (shouldUpdate) ?
+                              enableBackgroundFeedUpdatesUseCase.execute() :
+                              Completable.complete()
+                         )
+                         .toSingleDefault(true))                // Single<Boolean>
+                         .subscribe();                          // Single.subscribe(void) : Single 일 구독하지만 후속처리는 하지 않음
+
+        // 이 동작은 shoudUpdateFeedsInBackgroundUseCase 에서 true/false 를 받은 후
+        // enableBackgroundFeedUpdatesUseCase 에서 true 일 경우만, 함수를 수행하는 역할을 합니다.
+        // TODO: 그럼 더 단순하게 코드를 구현하는건 문제인가?
+        // (예) shouldUpdateFeedsInBackgroundUseCase.execute()
+        //              .subscribe(shouldUpdate -> {
+        //                  if (shouldUpdate) enableBackgroundFeedUpdatesUseCase.execute();
+        //              });
+        // true 인 경우에만 동작을 하고, 실패한 경우 아무 동작을 하지 않고, 그 여부를 알 필요가 없는데 길게 구현 할 필요가 있나?
     }
 
     public ApplicationComponent getApplicationComponent() {
+        Log.d(TAG, "getApplicationComponent");
         return applicationComponent;
     }
 }
